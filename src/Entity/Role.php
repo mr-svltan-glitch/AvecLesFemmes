@@ -20,6 +20,10 @@ class Role
     #[Assert\NotBlank]
     private string $nom;
 
+    #[ORM\ManyToOne(inversedBy: 'roles')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Groupement $groupement = null;
+
     /**
      * @var Collection<int, Membre>
      */
@@ -48,6 +52,26 @@ class Role
         return $this;
     }
 
+    public function getGroupement(): ?Groupement
+    {
+        return $this->groupement;
+    }
+
+    public function setGroupement(Groupement $groupement): self
+    {
+        if ($this->groupement === $groupement) {
+            return $this;
+        }
+
+        $this->groupement?->getRoles()->removeElement($this);
+        $this->groupement = $groupement;
+        if (!$groupement->getRoles()->contains($this)) {
+            $groupement->getRoles()->add($this);
+        }
+
+        return $this;
+    }
+
     /**
      * @return Collection<int, Membre>
      */
@@ -58,21 +82,7 @@ class Role
 
     public function addMembre(Membre $membre): self
     {
-        if (!$this->membres->contains($membre)) {
-            $this->membres->add($membre);
-            $membre->setRole($this);
-        }
-
-        return $this;
-    }
-
-    public function removeMembre(Membre $membre): self
-    {
-        if ($this->membres->removeElement($membre)) {
-            if ($membre->getRole() === $this) {
-                $membre->setRole(null);
-            }
-        }
+        $membre->setRole($this);
 
         return $this;
     }

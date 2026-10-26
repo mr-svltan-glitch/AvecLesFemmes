@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ModeCotisationRepository::class)]
+#[ORM\UniqueConstraint(name: 'UNIQ_MODE_COTISATION_MEMBRE_CAMPAGNE', columns: ['membre_id', 'campagne_id'])]
 class ModeCotisation
 {
     #[ORM\Id]
@@ -16,7 +17,7 @@ class ModeCotisation
     private ?int $id = null;
 
     #[ORM\Column]
-    private bool $isLibre = false;
+    private bool $isLibre;
 
     #[ORM\ManyToOne(inversedBy: 'modeCotisations')]
     #[ORM\JoinColumn(nullable: false)]
@@ -29,7 +30,7 @@ class ModeCotisation
     /**
      * @var Collection<int, Cotisation>
      */
-    #[ORM\OneToMany(mappedBy: 'modeCotisation', targetEntity: Cotisation::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
+    #[ORM\OneToMany(mappedBy: 'modeCotisation', targetEntity: Cotisation::class, cascade: ['persist'])]
     private Collection $cotisations;
 
     public function __construct()
@@ -59,9 +60,17 @@ class ModeCotisation
         return $this->membre;
     }
 
-    public function setMembre(?Membre $membre): self
+    public function setMembre(Membre $membre): self
     {
+        if ($this->membre === $membre) {
+            return $this;
+        }
+
+        $this->membre?->getModeCotisations()->removeElement($this);
         $this->membre = $membre;
+        if (!$membre->getModeCotisations()->contains($this)) {
+            $membre->getModeCotisations()->add($this);
+        }
 
         return $this;
     }
@@ -71,9 +80,17 @@ class ModeCotisation
         return $this->campagne;
     }
 
-    public function setCampagne(?Campagne $campagne): self
+    public function setCampagne(Campagne $campagne): self
     {
+        if ($this->campagne === $campagne) {
+            return $this;
+        }
+
+        $this->campagne?->getModeCotisations()->removeElement($this);
         $this->campagne = $campagne;
+        if (!$campagne->getModeCotisations()->contains($this)) {
+            $campagne->getModeCotisations()->add($this);
+        }
 
         return $this;
     }
@@ -84,5 +101,12 @@ class ModeCotisation
     public function getCotisations(): Collection
     {
         return $this->cotisations;
+    }
+
+    public function addCotisation(Cotisation $cotisation): self
+    {
+        $cotisation->setModeCotisation($this);
+
+        return $this;
     }
 }

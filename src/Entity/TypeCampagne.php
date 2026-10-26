@@ -20,8 +20,9 @@ class TypeCampagne
     #[Assert\NotBlank]
     private string $nom;
 
-    #[ORM\Column(type: 'text', nullable: true)]
-    private ?string $description = null;
+    #[ORM\Column(type: 'text')]
+    #[Assert\NotBlank]
+    private string $description;
 
     /**
      * @var Collection<int, Campagne>
@@ -51,12 +52,12 @@ class TypeCampagne
         return $this;
     }
 
-    public function getDescription(): ?string
+    public function getDescription(): string
     {
         return $this->description;
     }
 
-    public function setDescription(?string $description): self
+    public function setDescription(string $description): self
     {
         $this->description = $description;
 
@@ -69,5 +70,12 @@ class TypeCampagne
     public function getCampagnes(): Collection
     {
         return $this->campagnes;
+    }
+
+    public function addCampagne(Campagne $campagne): self
+    {
+        $campagne->setTypeCampagne($this);
+
+        return $this;
     }
 }

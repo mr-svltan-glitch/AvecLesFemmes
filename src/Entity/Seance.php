@@ -32,10 +32,14 @@ class Seance
     #[ORM\JoinColumn(nullable: false)]
     private ?Campagne $campagne = null;
 
+    #[ORM\ManyToOne(inversedBy: 'seances')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Admin $admin = null;
+
     /**
      * @var Collection<int, Cotisation>
      */
-    #[ORM\OneToMany(mappedBy: 'seance', targetEntity: Cotisation::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
+    #[ORM\OneToMany(mappedBy: 'seance', targetEntity: Cotisation::class, cascade: ['persist'])]
     private Collection $cotisations;
 
     public function __construct()
@@ -89,9 +93,37 @@ class Seance
         return $this->campagne;
     }
 
-    public function setCampagne(?Campagne $campagne): self
+    public function setCampagne(Campagne $campagne): self
     {
+        if ($this->campagne === $campagne) {
+            return $this;
+        }
+
+        $this->campagne?->getSeances()->removeElement($this);
         $this->campagne = $campagne;
+        if (!$campagne->getSeances()->contains($this)) {
+            $campagne->getSeances()->add($this);
+        }
+
+        return $this;
+    }
+
+    public function getAdmin(): ?Admin
+    {
+        return $this->admin;
+    }
+
+    public function setAdmin(Admin $admin): self
+    {
+        if ($this->admin === $admin) {
+            return $this;
+        }
+
+        $this->admin?->getSeances()->removeElement($this);
+        $this->admin = $admin;
+        if (!$admin->getSeances()->contains($this)) {
+            $admin->getSeances()->add($this);
+        }
 
         return $this;
     }
@@ -102,5 +134,12 @@ class Seance
     public function getCotisations(): Collection
     {
         return $this->cotisations;
+    }
+
+    public function addCotisation(Cotisation $cotisation): self
+    {
+        $cotisation->setSeance($this);
+
+        return $this;
     }
 }

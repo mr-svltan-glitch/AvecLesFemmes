@@ -2,12 +2,16 @@
 
 namespace App\Entity;
 
+use App\Repository\CampagneRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: CampagneRepository::class)]
+#[ORM\InheritanceType('JOINED')]
+#[ORM\DiscriminatorColumn(name: 'discr', type: 'string')]
+#[ORM\DiscriminatorMap(['campagne' => Campagne::class, 'epargne' => Epargne::class, 'tontine' => Tontine::class])]
 class Campagne
 {
     #[ORM\Id]
@@ -29,7 +33,7 @@ class Campagne
     protected float $montant;
 
     #[ORM\Column(type: 'datetime_immutable')]
-    protected \DateTimeImmutable $dateCreatedAt;
+    protected \DateTimeImmutable $createdAt;
 
     #[ORM\Column(type: 'datetime', nullable: true)]
     protected ?\DateTimeInterface $updatedAt = null;
@@ -41,20 +45,20 @@ class Campagne
     /**
      * @var Collection<int, Seance>
      */
-    #[ORM\OneToMany(mappedBy: 'campagne', targetEntity: Seance::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
+    #[ORM\OneToMany(mappedBy: 'campagne', targetEntity: Seance::class, cascade: ['persist'])]
     protected Collection $seances;
 
     /**
      * @var Collection<int, ModeCotisation>
      */
-    #[ORM\OneToMany(mappedBy: 'campagne', targetEntity: ModeCotisation::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
+    #[ORM\OneToMany(mappedBy: 'campagne', targetEntity: ModeCotisation::class, cascade: ['persist'])]
     protected Collection $modeCotisations;
 
     public function __construct()
     {
         $this->seances = new ArrayCollection();
         $this->modeCotisations = new ArrayCollection();
-        $this->dateCreatedAt = new \DateTimeImmutable();
+        $this->createdAt = new \DateTimeImmutable();
         $this->dateDebut = new \DateTimeImmutable();
     }
 
@@ -99,14 +103,14 @@ class Campagne
         return $this;
     }
 
-    public function getDateCreatedAt(): \DateTimeImmutable
+    public function getCreatedAt(): \DateTimeImmutable
     {
-        return $this->dateCreatedAt;
+        return $this->createdAt;
     }
 
-    public function setDateCreatedAt(\DateTimeImmutable $dateCreatedAt): self
+    public function setCreatedAt(\DateTimeImmutable $createdAt): self
     {
-        $this->dateCreatedAt = $dateCreatedAt;
+        $this->createdAt = $createdAt;
 
         return $this;
     }
@@ -140,9 +144,17 @@ class Campagne
         return $this->typeCampagne;
     }
 
-    public function setTypeCampagne(?TypeCampagne $typeCampagne): self
+    public function setTypeCampagne(TypeCampagne $typeCampagne): self
     {
+        if ($this->typeCampagne === $typeCampagne) {
+            return $this;
+        }
+
+        $this->typeCampagne?->getCampagnes()->removeElement($this);
         $this->typeCampagne = $typeCampagne;
+        if (!$typeCampagne->getCampagnes()->contains($this)) {
+            $typeCampagne->getCampagnes()->add($this);
+        }
 
         return $this;
     }
@@ -157,21 +169,7 @@ class Campagne
 
     public function addSeance(Seance $seance): self
     {
-        if (!$this->seances->contains($seance)) {
-            $this->seances->add($seance);
-            $seance->setCampagne($this);
-        }
-
-        return $this;
-    }
-
-    public function removeSeance(Seance $seance): self
-    {
-        if ($this->seances->removeElement($seance)) {
-            if ($seance->getCampagne() === $this) {
-                $seance->setCampagne(null);
-            }
-        }
+        $seance->setCampagne($this);
 
         return $this;
     }
@@ -182,5 +180,12 @@ class Campagne
     public function getModeCotisations(): Collection
     {
         return $this->modeCotisations;
+    }
+
+    public function addModeCotisation(ModeCotisation $modeCotisation): self
+    {
+        $modeCotisation->setCampagne($this);
+
+        return $this;
     }
 }

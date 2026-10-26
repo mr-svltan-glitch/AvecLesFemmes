@@ -2,12 +2,16 @@
 
 namespace App\Entity;
 
+use App\Repository\MembreRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: MembreRepository::class)]
+#[ORM\InheritanceType('JOINED')]
+#[ORM\DiscriminatorColumn(name: 'discr', type: 'string')]
+#[ORM\DiscriminatorMap(['membre' => Membre::class, 'admin' => Admin::class])]
 class Membre
 {
     #[ORM\Id]
@@ -19,11 +23,11 @@ class Membre
     #[Assert\NotBlank]
     protected string $nomComplet;
 
-    #[ORM\Column(length: 30, nullable: true)]
-    protected ?string $telephone = null;
+    #[ORM\Column(length: 30)]
+    protected string $telephone;
 
-    #[ORM\Column(length: 255, nullable: true)]
-    protected ?string $adresse = null;
+    #[ORM\Column(length: 255)]
+    protected string $adresse;
 
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank]
@@ -43,7 +47,7 @@ class Membre
     /**
      * @var Collection<int, ModeCotisation>
      */
-    #[ORM\OneToMany(mappedBy: 'membre', targetEntity: ModeCotisation::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
+    #[ORM\OneToMany(mappedBy: 'membre', targetEntity: ModeCotisation::class, cascade: ['persist'])]
     protected Collection $modeCotisations;
 
     public function __construct()
@@ -68,24 +72,24 @@ class Membre
         return $this;
     }
 
-    public function getTelephone(): ?string
+    public function getTelephone(): string
     {
         return $this->telephone;
     }
 
-    public function setTelephone(?string $telephone): self
+    public function setTelephone(string $telephone): self
     {
         $this->telephone = $telephone;
 
         return $this;
     }
 
-    public function getAdresse(): ?string
+    public function getAdresse(): string
     {
         return $this->adresse;
     }
 
-    public function setAdresse(?string $adresse): self
+    public function setAdresse(string $adresse): self
     {
         $this->adresse = $adresse;
 
@@ -121,9 +125,17 @@ class Membre
         return $this->groupement;
     }
 
-    public function setGroupement(?Groupement $groupement): self
+    public function setGroupement(Groupement $groupement): self
     {
+        if ($this->groupement === $groupement) {
+            return $this;
+        }
+
+        $this->groupement?->getMembres()->removeElement($this);
         $this->groupement = $groupement;
+        if (!$groupement->getMembres()->contains($this)) {
+            $groupement->getMembres()->add($this);
+        }
 
         return $this;
     }
@@ -133,9 +145,17 @@ class Membre
         return $this->role;
     }
 
-    public function setRole(?Role $role): self
+    public function setRole(Role $role): self
     {
+        if ($this->role === $role) {
+            return $this;
+        }
+
+        $this->role?->getMembres()->removeElement($this);
         $this->role = $role;
+        if (!$role->getMembres()->contains($this)) {
+            $role->getMembres()->add($this);
+        }
 
         return $this;
     }
@@ -146,5 +166,12 @@ class Membre
     public function getModeCotisations(): Collection
     {
         return $this->modeCotisations;
+    }
+
+    public function addModeCotisation(ModeCotisation $modeCotisation): self
+    {
+        $modeCotisation->setMembre($this);
+
+        return $this;
     }
 }

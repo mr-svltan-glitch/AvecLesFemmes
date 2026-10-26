@@ -16,11 +16,11 @@ class Cotisation
     #[ORM\Column(type: 'float')]
     private float $montant;
 
-    #[ORM\Column(type: 'datetime', nullable: true)]
-    private ?\DateTimeInterface $datePaiement = null;
+    #[ORM\Column(type: 'datetime')]
+    private \DateTimeInterface $datePaiement;
 
     #[ORM\Column(length: 50)]
-    private string $statut = 'en_attente';
+    private string $statut;
 
     #[ORM\ManyToOne(inversedBy: 'cotisations')]
     #[ORM\JoinColumn(nullable: false)]
@@ -47,12 +47,12 @@ class Cotisation
         return $this;
     }
 
-    public function getDatePaiement(): ?\DateTimeInterface
+    public function getDatePaiement(): \DateTimeInterface
     {
         return $this->datePaiement;
     }
 
-    public function setDatePaiement(?\DateTimeInterface $datePaiement): self
+    public function setDatePaiement(\DateTimeInterface $datePaiement): self
     {
         $this->datePaiement = $datePaiement;
 
@@ -76,9 +76,17 @@ class Cotisation
         return $this->modeCotisation;
     }
 
-    public function setModeCotisation(?ModeCotisation $modeCotisation): self
+    public function setModeCotisation(ModeCotisation $modeCotisation): self
     {
+        if ($this->modeCotisation === $modeCotisation) {
+            return $this;
+        }
+
+        $this->modeCotisation?->getCotisations()->removeElement($this);
         $this->modeCotisation = $modeCotisation;
+        if (!$modeCotisation->getCotisations()->contains($this)) {
+            $modeCotisation->getCotisations()->add($this);
+        }
 
         return $this;
     }
@@ -88,9 +96,17 @@ class Cotisation
         return $this->seance;
     }
 
-    public function setSeance(?Seance $seance): self
+    public function setSeance(Seance $seance): self
     {
+        if ($this->seance === $seance) {
+            return $this;
+        }
+
+        $this->seance?->getCotisations()->removeElement($this);
         $this->seance = $seance;
+        if (!$seance->getCotisations()->contains($this)) {
+            $seance->getCotisations()->add($this);
+        }
 
         return $this;
     }

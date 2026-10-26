@@ -26,12 +26,19 @@ class Groupement
     /**
      * @var Collection<int, Membre>
      */
-    #[ORM\OneToMany(mappedBy: 'groupement', targetEntity: Membre::class, cascade: ['persist', 'remove'])]
+    #[ORM\OneToMany(mappedBy: 'groupement', targetEntity: Membre::class, cascade: ['persist'])]
     private Collection $membres;
+
+    /**
+     * @var Collection<int, Role>
+     */
+    #[ORM\OneToMany(mappedBy: 'groupement', targetEntity: Role::class, cascade: ['persist'])]
+    private Collection $roles;
 
     public function __construct()
     {
         $this->membres = new ArrayCollection();
+        $this->roles = new ArrayCollection();
         $this->dateCreation = new \DateTimeImmutable();
     }
 
@@ -74,21 +81,22 @@ class Groupement
 
     public function addMembre(Membre $membre): self
     {
-        if (!$this->membres->contains($membre)) {
-            $this->membres->add($membre);
-            $membre->setGroupement($this);
-        }
+        $membre->setGroupement($this);
 
         return $this;
     }
 
-    public function removeMembre(Membre $membre): self
+    /**
+     * @return Collection<int, Role>
+     */
+    public function getRoles(): Collection
     {
-        if ($this->membres->removeElement($membre)) {
-            if ($membre->getGroupement() === $this) {
-                $membre->setGroupement(null);
-            }
-        }
+        return $this->roles;
+    }
+
+    public function addRole(Role $role): self
+    {
+        $role->setGroupement($this);
 
         return $this;
     }
