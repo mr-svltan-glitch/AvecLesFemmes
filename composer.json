@@ -65,10 +65,7 @@
     ],
     "modibocoulibaly:cache:clear": "php bin/console cache:clear",
     "modibocoulibaly:make:entity": "php bin/console make:entity",
-    "modibocoulibaly:migration": [
-        "php bin/console make:migration",
-        "php bin/console doctrine:migrations:migrate --no-interaction"
-    ]
+    "modibocoulibaly:migration": "php bin/console make:migration --no-interaction && php bin/console doctrine:migrations:migrate --no-interaction"
 },
 
     "conflict": {
