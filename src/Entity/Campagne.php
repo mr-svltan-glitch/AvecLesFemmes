@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\CampagneRepository;
+use App\Trait\DateTimeTrait;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -12,8 +13,11 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\InheritanceType('JOINED')]
 #[ORM\DiscriminatorColumn(name: 'discr', type: 'string')]
 #[ORM\DiscriminatorMap(['campagne' => Campagne::class, 'epargne' => Epargne::class, 'tontine' => Tontine::class])]
+#[ORM\HasLifecycleCallbacks]
 class Campagne
 {
+    use DateTimeTrait;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -32,15 +36,13 @@ class Campagne
     #[ORM\Column(type: 'float')]
     protected float $montant;
 
-    #[ORM\Column(type: 'datetime_immutable')]
-    protected \DateTimeImmutable $createdAt;
-
-    #[ORM\Column(type: 'datetime', nullable: true)]
-    protected ?\DateTimeInterface $updatedAt = null;
-
     #[ORM\ManyToOne(inversedBy: 'campagnes')]
     #[ORM\JoinColumn(nullable: false)]
     protected ?TypeCampagne $typeCampagne = null;
+
+    #[ORM\ManyToOne(inversedBy: 'campagnes')]
+    #[ORM\JoinColumn(nullable: false)]
+    protected ?Groupement $groupement = null;
 
     /**
      * @var Collection<int, Seance>
@@ -56,10 +58,10 @@ class Campagne
 
     public function __construct()
     {
+        $this->initializeDateTimes();
         $this->seances = new ArrayCollection();
         $this->modeCotisations = new ArrayCollection();
-        $this->createdAt = new \DateTimeImmutable();
-        $this->dateDebut = new \DateTimeImmutable();
+        $this->dateDebut = new \DateTime();
     }
 
     public function getId(): ?int
@@ -86,7 +88,7 @@ class Campagne
 
     public function setDateDebut(\DateTimeInterface $dateDebut): self
     {
-        $this->dateDebut = $dateDebut;
+        $this->dateDebut = $dateDebut instanceof \DateTimeImmutable ? \DateTime::createFromInterface($dateDebut) : new \DateTime($dateDebut->format('Y-m-d'), $dateDebut->getTimezone());
 
         return $this;
     }
@@ -103,30 +105,6 @@ class Campagne
         return $this;
     }
 
-    public function getCreatedAt(): \DateTimeImmutable
-    {
-        return $this->createdAt;
-    }
-
-    public function setCreatedAt(\DateTimeImmutable $createdAt): self
-    {
-        $this->createdAt = $createdAt;
-
-        return $this;
-    }
-
-    public function getUpdatedAt(): ?\DateTimeInterface
-    {
-        return $this->updatedAt;
-    }
-
-    public function setUpdatedAt(?\DateTimeInterface $updatedAt): self
-    {
-        $this->updatedAt = $updatedAt;
-
-        return $this;
-    }
-
     public function getDateFin(): ?\DateTimeInterface
     {
         return $this->dateFin;
@@ -134,7 +112,7 @@ class Campagne
 
     public function setDateFin(?\DateTimeInterface $dateFin): self
     {
-        $this->dateFin = $dateFin;
+        $this->dateFin = $dateFin === null ? null : ($dateFin instanceof \DateTimeImmutable ? \DateTime::createFromInterface($dateFin) : new \DateTime($dateFin->format('Y-m-d'), $dateFin->getTimezone()));
 
         return $this;
     }
@@ -154,6 +132,26 @@ class Campagne
         $this->typeCampagne = $typeCampagne;
         if (!$typeCampagne->getCampagnes()->contains($this)) {
             $typeCampagne->getCampagnes()->add($this);
+        }
+
+        return $this;
+    }
+
+    public function getGroupement(): ?Groupement
+    {
+        return $this->groupement;
+    }
+
+    public function setGroupement(Groupement $groupement): self
+    {
+        if ($this->groupement === $groupement) {
+            return $this;
+        }
+
+        $this->groupement?->getCampagnes()->removeElement($this);
+        $this->groupement = $groupement;
+        if (!$groupement->getCampagnes()->contains($this)) {
+            $groupement->getCampagnes()->add($this);
         }
 
         return $this;

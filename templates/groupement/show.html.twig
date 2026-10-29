@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ groupement.nom }}{% endblock %}
+
+{% block body %}
+    <h1>{{ groupement.nom }}</h1>
+    <p><strong>Statut :</strong> {{ groupement.statut }}</p>
+    {% if exercice %}
+        <p><strong>Exercice en cours :</strong> {{ exercice.dateDebut }} - {{ exercice.dateFin ?? 'à définir' }}</p>
+    {% endif %}
+
+    <h2>Campagnes</h2>
+    {% if campagnes is empty %}
+        <p>Aucune campagne pour ce groupement.</p>
+    {% else %}
+        <ul>
+            {% for campagne in campagnes %}
+                <li>
+                    <a href="{{ path('campagne_show', {'id': campagne.id}) }}">{{ campagne.nom }}</a>
+                    ({{ campagne.typeCampagne ? campagne.typeCampagne.nom : 'Type inconnu' }})
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <p><a href="{{ path('groupements_index') }}">Retour</a></p>
+{% endblock %}

@@ -59,7 +59,7 @@ class Seance
 
     public function setDateSeance(\DateTimeInterface $dateSeance): self
     {
-        $this->dateSeance = $dateSeance;
+        $this->dateSeance = $dateSeance instanceof \DateTimeImmutable ? \DateTime::createFromInterface($dateSeance) : new \DateTime($dateSeance->format('Y-m-d'), $dateSeance->getTimezone());
 
         return $this;
     }
@@ -138,8 +138,54 @@ class Seance
 
     public function addCotisation(Cotisation $cotisation): self
     {
-        $cotisation->setSeance($this);
+        if (!$this->cotisations->contains($cotisation)) {
+            $this->cotisations->add($cotisation);
+            $cotisation->setSeance($this);
+        }
 
         return $this;
+    }
+
+    public function removeCotisation(Cotisation $cotisation): self
+    {
+        if ($this->cotisations->removeElement($cotisation)) {
+            $cotisation->setSeance(null);
+        }
+
+        return $this;
+    }
+
+    public function getMontantTotalCollecte(): float
+    {
+        $total = 0.0;
+        foreach ($this->cotisations as $cotisation) {
+            $total += $cotisation->getMontant();
+        }
+
+        return $total;
+    }
+
+    public function getMontantTotalAmendes(): float
+    {
+        $total = 0.0;
+        foreach ($this->cotisations as $cotisation) {
+            if ($cotisation->isAmende()) {
+                $total += $cotisation->getMontant();
+            }
+        }
+
+        return $total;
+    }
+
+    public function getMontantTotalCaisseSociale(): float
+    {
+        $total = 0.0;
+        foreach ($this->cotisations as $cotisation) {
+            if ($cotisation->isCaisseSociale()) {
+                $total += $cotisation->getMontant();
+            }
+        }
+
+        return $total;
     }
 }

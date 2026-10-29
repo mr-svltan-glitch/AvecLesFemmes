@@ -1,0 +1,34 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Groupements{% endblock %}
+
+{% block body %}
+    <h1>Groupements</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Statut</th>
+                <th>Exercice en cours</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in groupements %}
+                {% set groupement = item.groupement %}
+                <tr>
+                    <td>{{ groupement.nom }}</td>
+                    <td>{{ groupement.statut }}</td>
+                    <td>
+                        {% if item.exercice %}
+                            {{ item.exercice.dateDebut }} → {{ item.exercice.dateFin ?? 'À définir' }}
+                        {% else %}
+                            <span class="muted">Aucun</span>
+                        {% endif %}
+                    </td>
+                    <td><a href="{{ path('groupement_show', {'id': groupement.id}) }}">Détail</a></td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

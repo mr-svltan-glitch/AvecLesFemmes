@@ -1,0 +1,44 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Séance du {{ seance.dateSeance|date('d/m/Y') }}{% endblock %}
+
+{% block body %}
+    <h1>Séance du {{ seance.dateSeance|date('d/m/Y') }}</h1>
+    <p><strong>Fréquence :</strong> {{ seance.frequence }}</p>
+    <p><strong>Statut :</strong> {{ seance.statut }}</p>
+
+    <h2>Totaux</h2>
+    <ul>
+        <li>Montant collecté : {{ detail.montantTotalCollecte }} FCFA</li>
+        <li>Montant des amendes : {{ detail.montantTotalAmendes }} FCFA</li>
+        <li>Montant caisse sociale : {{ detail.montantTotalCaisseSociale }} FCFA</li>
+    </ul>
+
+    <h2>Cotisations</h2>
+    {% if cotisations is empty %}
+        <p>Aucune cotisation.</p>
+    {% else %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Montant</th>
+                    <th>Date</th>
+                    <th>Statut</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cotisation in cotisations %}
+                    <tr>
+                        <td>{{ cotisation.modeCotisation ? cotisation.modeCotisation.membre.nomComplet : 'N/A' }}</td>
+                        <td>{{ cotisation.montant }} FCFA</td>
+                        <td>{{ cotisation.datePaiement|date('d/m/Y') }}</td>
+                        <td>{{ cotisation.statut }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+
+    <p><a href="{{ path('campagne_show', {'id': seance.campagne.id}) }}">Retour à la campagne</a></p>
+{% endblock %}

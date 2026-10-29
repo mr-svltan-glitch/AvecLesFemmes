@@ -54,7 +54,7 @@ class Cotisation
 
     public function setDatePaiement(\DateTimeInterface $datePaiement): self
     {
-        $this->datePaiement = $datePaiement;
+        $this->datePaiement = $datePaiement instanceof \DateTimeImmutable ? \DateTime::createFromInterface($datePaiement) : new \DateTime($datePaiement->format('Y-m-d H:i:s'), $datePaiement->getTimezone());
 
         return $this;
     }
@@ -96,7 +96,7 @@ class Cotisation
         return $this->seance;
     }
 
-    public function setSeance(Seance $seance): self
+    public function setSeance(?Seance $seance): self
     {
         if ($this->seance === $seance) {
             return $this;
@@ -104,10 +104,25 @@ class Cotisation
 
         $this->seance?->getCotisations()->removeElement($this);
         $this->seance = $seance;
-        if (!$seance->getCotisations()->contains($this)) {
+        if ($seance !== null && !$seance->getCotisations()->contains($this)) {
             $seance->getCotisations()->add($this);
         }
 
         return $this;
+    }
+
+    private function normalizeStatut(string $statut): string
+    {
+        return strtolower(str_replace([' ', '-'], '_', trim($statut)));
+    }
+
+    public function isAmende(): bool
+    {
+        return in_array($this->normalizeStatut($this->statut), ['amende', 'amendes', 'amende_journaliere'], true);
+    }
+
+    public function isCaisseSociale(): bool
+    {
+        return in_array($this->normalizeStatut($this->statut), ['caisse_sociale', 'caisse_present', 'caisse_absent', 'caisse'], true);
     }
 }

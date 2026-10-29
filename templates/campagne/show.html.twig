@@ -1,0 +1,37 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ campagne.nom }}{% endblock %}
+
+{% block body %}
+    <h1>{{ campagne.nom }}</h1>
+    <p><strong>Type :</strong> {{ campagne.typeCampagne ? campagne.typeCampagne.nom : 'Inconnu' }}</p>
+    <p><strong>Montant :</strong> {{ campagne.montant }} FCFA</p>
+    <p><strong>Période :</strong> {{ campagne.dateDebut|date('d/m/Y') }} - {{ campagne.dateFin ? campagne.dateFin|date('d/m/Y') : 'En cours' }}</p>
+
+    <h2>Membres</h2>
+    {% if membres is empty %}
+        <p>Aucun membre associé.</p>
+    {% else %}
+        <ul>
+            {% for membre in membres %}
+                <li>{{ membre.nomComplet }} — {{ membre.login }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <h2>Séances</h2>
+    {% if seances is empty %}
+        <p>Aucune séance enregistrée.</p>
+    {% else %}
+        <ul>
+            {% for seance in seances %}
+                <li>
+                    <a href="{{ path('seance_show', {'id': seance.id}) }}">{{ seance.dateSeance|date('d/m/Y') }}</a>
+                    — {{ seance.frequence }} — {{ seance.statut }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <p><a href="{{ path('groupement_show', {'id': campagne.groupement.id}) }}">Retour au groupement</a></p>
+{% endblock %}

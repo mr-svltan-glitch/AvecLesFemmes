@@ -15,4 +15,38 @@ class SeanceRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Seance::class);
     }
+
+    public function getMontantTotalCollecte(Seance $seance): float
+    {
+        $total = 0.0;
+        foreach ($seance->getCotisations() as $cotisation) {
+            $total += $cotisation->getMontant();
+        }
+
+        return $total;
+    }
+
+    public function getMontantTotalAmendes(Seance $seance): float
+    {
+        $total = 0.0;
+        foreach ($seance->getCotisations() as $cotisation) {
+            if ($cotisation->isAmende()) {
+                $total += $cotisation->getMontant();
+            }
+        }
+
+        return $total;
+    }
+
+    public function getMontantTotalCaisseSociale(Seance $seance): float
+    {
+        $total = 0.0;
+        foreach ($seance->getCotisations() as $cotisation) {
+            if ($cotisation->isCaisseSociale()) {
+                $total += $cotisation->getMontant();
+            }
+        }
+
+        return $total;
+    }
 }
